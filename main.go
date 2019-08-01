@@ -8,12 +8,20 @@ import(
 	"strconv"
 	"github.com/gorilla/mux"
 )
-// Book Struct (Model)
-type Book struct {
+// Datasets Struct (Model)
+type Datasets struct {
 	ID string `json:"id"`
-	Isbn string `json:"isbn"`
-	Title string `json:"title"`
-	Author *Author `json:"author"`
+	Label string `json:"label"`
+	Data []string `json:"data"`
+}
+
+type Label struct {
+	Labels []string `json:"labels"`
+}
+
+type Combined struct {
+	Datasets []Datasets
+	Label []Label
 }
 
 // Author Struct
@@ -23,16 +31,18 @@ type Author struct {
 }
 
 // Init books var as a slice book Struct
-var books []Book 
+var books []Datasets 
+var labels []Label
+var combined []Combined
 
 // Get all books
-func getBooks(res http.ResponseWriter, req *http.Request) {
+func getDatasets(res http.ResponseWriter, req *http.Request) {
 	res.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(res).Encode(books)
+	json.NewEncoder(res).Encode(combined)
 }
 
 // Get single book
-func getBook(res http.ResponseWriter, req *http.Request) {
+func getDataset(res http.ResponseWriter, req *http.Request) {
 	res.Header().Set("Content-Type", "application/json")
 	params := mux.Vars(req) // Get Params
 	// Loop through books and find matched ID
@@ -42,14 +52,14 @@ func getBook(res http.ResponseWriter, req *http.Request) {
 			return
 		}
 	}
-	json.NewEncoder(res).Encode(&Book{})
+	json.NewEncoder(res).Encode(&Datasets{})
 
 }
 
 // Create new book
-func createBook(res http.ResponseWriter, req *http.Request) {
+func createDatasets(res http.ResponseWriter, req *http.Request) {
 	res.Header().Set("Content-Type", "application/json")
-	var book Book
+	var book Datasets
 	_ = json.NewDecoder(req.Body).Decode(&book)
 	book.ID = strconv.Itoa(rand.Intn(10000000)) // mock ID
 	books = append(books, book)
@@ -58,13 +68,13 @@ func createBook(res http.ResponseWriter, req *http.Request) {
 }
 
 // Update a book
-func updateBook(res http.ResponseWriter, req *http.Request) {
+func updateDatasets(res http.ResponseWriter, req *http.Request) {
 	res.Header().Set("Content-Type", "application/json")
 	params := mux.Vars(req) // Get Params
 	for index, item := range books {
 		if item.ID == params["id"]{
 			books = append(books[:index], books[index+1:]...)
-			var book Book
+			var book Datasets
 			_ = json.NewDecoder(req.Body).Decode(&book)
 			book.ID = params["id"]
 			books = append(books, book)
@@ -76,7 +86,7 @@ func updateBook(res http.ResponseWriter, req *http.Request) {
 }
 
 // Delete a book
-func deleteBook(res http.ResponseWriter, req *http.Request) {
+func deleteDatasets(res http.ResponseWriter, req *http.Request) {
 	res.Header().Set("Content-Type", "application/json")
 	params := mux.Vars(req) // Get Params
 	for index, item := range books {
@@ -92,17 +102,20 @@ func main(){
 	router := mux.NewRouter()
 
 	// Mock Data
-	books = append(books, Book{ID: "1", Isbn:"3242343", Title:"Listen And Serve", Author: &Author {Firstname: "John", Lastname: "Doe"}})
-	books = append(books, Book{ID: "2", Isbn:"1233343", Title:"Listen and Protect", Author: &Author {Firstname: "John", Lastname: "Doe"}})
-	books = append(books, Book{ID: "3", Isbn:"5723453", Title:"ProtectAndServe", Author: &Author {Firstname: "John", Lastname: "Doe"}})
-	books = append(books, Book{ID: "4", Isbn:"7654433", Title:"He Protec, He Attac", Author: &Author {Firstname: "John", Lastname: "Doe"}})
+	books = append(books, Datasets{ID: "1", Label:"Subs", Data:[]string{"14", "15", "21", "0", "12", "4", "1"}})
+	books = append(books, Datasets{ID: "2", Label:"Views", Data:[]string{"8", "12", "11", "4", "1", "14", "8"}})
+	books = append(books, Datasets{ID: "3", Label:"Likes", Data:[]string{"11", "15", "5", "15", "42", "4", "14"}})
+	books = append(books, Datasets{ID: "4", Label:"Dislikes", Data:[]string{"4", "5", "1", "10", "32", "2", "12"}})
+	//books = append(books, Datasets{Labels:[]string{"1", "2", "3", "4", "5"}})
+	labels = append(labels, Label{Labels:[]string{"1", "2", "3", "4", "5"}})
+	combined = append(combined, Combined{books,labels});
 
 	// Route handlers / Endpoints
-	router.HandleFunc("/api/books", getBooks).Methods("GET")
-	router.HandleFunc("/api/books/{id}", getBook).Methods("GET")
-	router.HandleFunc("/api/books", createBook).Methods("POST")
-	router.HandleFunc("/api/books/{id}", updateBook).Methods("PUT")
-	router.HandleFunc("/api/books/{id}", deleteBook).Methods("DELETE")
+	router.HandleFunc("/api/datasets", getDatasets).Methods("GET")
+	router.HandleFunc("/api/dataset/{id}", getDataset).Methods("GET")
+	router.HandleFunc("/api/datasets", createDatasets).Methods("POST")
+	router.HandleFunc("/api/datasets/{id}", updateDatasets).Methods("PUT")
+	router.HandleFunc("/api/datasets/{id}", deleteDatasets).Methods("DELETE")
 
 	log.Fatal(http.ListenAndServe(":8000", router))
 }
